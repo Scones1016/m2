@@ -54,7 +54,7 @@ let n2 = {ip: "127.0.0.1", port:"8081"};
 
 A node can be configured upon startup either by providing as a parameter a serialized configuration object (in the general case, this object can include any [M1-supported ](https://docs.google.com/document/d/e/2PACX-1vSwf1NRh7D1iYxlqgnIPQT7pvCZEzbwoZ3dsRTnktxzJopuJSU2E2HB7_He-cVcOaDqWgTyYT18gjBJ/pub)deserialization value etc.) or by setting a global `config` object before importing the distribution library. The former is useful for passing a parameter when a node is spawned as a Unix process by running `./distribution.js` in the terminal; the latter is useful for when a node is launched by importing the `distribution.js` library. Here's an example of the former:
 
-```js
+```sh
 ./distribution.js --config '{ "ip": "127.0.0.1", "port": 8080}'
 ```
 
@@ -102,16 +102,11 @@ All parameters are optional: if no value is provided, your system _should pick a
 
 The table below shows a core set of services that need to be implemented (and eventually be made available by the system to anyone importing or using `distribution.js`.):
 
-
-
-|          |                                              |              |
+| Service  | Description                                  | Methods      |
 | -------- | -------------------------------------------- | ------------ |
-| Service  | Description                                  | Methods      |
 | status   | Information about the current node           | `get`        |
 | routes   | A mapping from names to functions (services) | `get`, `put` |
 | comm     | A message communication interface            | `send`       |
-
-
 
 **Service status.** The `status` service is responsible for maintaining some node-related information such as the node IP and port.
 
