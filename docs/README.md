@@ -34,8 +34,6 @@ GitHub repo: https://github.com/brown-cs1380/m2
 
 ## Background & Context
 
-****
-
 A distributed environment can be viewed as a collection of nodes collectively providing one or more services. A typical distributed environment today might feature a closed set of primitives supporting these services. These primitives are often baked into the system, at times allowing only for some form of configurability through parameters. In this milestone we will explore an alternative approach — dynamic sets of services that support runtime extensibility.
 
 
@@ -54,8 +52,6 @@ The following online resources might be useful for this milestone:
 
 
 ## Per-Node Listener and Configuration
-
-****
 
 Each node combines two elements: (1) a listening server for receiving messages from the network, explained in this section; and (2) an extensible library of services, shown in the next section, each responsible for handling different messages.
 
@@ -91,8 +87,6 @@ A few functions are important here. Function `resolve` takes a request and a res
 
 ## Naming and Calling Conventions
 
-****
-
 A node contains a library of services, which are callable both from within a node and from other nodes. The structure of the library is `distribution.local[service][method]`. For example, `distribution.local.status.get() `points to the `get` _method_ of the `mem` _service_. The next section discusses a few services available by default on every node; implementing these services is the focus of this milestone. For brevity, we will be omitting the first two parts in the code snippets below — for example, we will be writing `status.get()`.
 
 
@@ -117,8 +111,6 @@ All parameters are optional: if no value is provided, your system _should pick a
 
 
 ## The Core Service Library
-
-****
 
 The table below shows a core set of services that need to be implemented (and eventually be made available by the system to anyone importing or using `distribution.js`.):
 
@@ -177,8 +169,6 @@ As always, if the value about to be accessed does not exist, the service should 
 
 ## Error Handling
 
-****
-
 You should avoid situations where system behavior becomes "undefined" or the system halts unexpectedly. When implementing services, it is crucial to ensure they can deal with errors gracefully: always include default values and behavior, verify input arguments and expected inputs, and return `Error` objects instead of throwing exceptions. When arguments such as `config` or callbacks are not provided, a service should implement a default behavior<sup>[1](#1)</sup> — it shouldn't crash. An example default behavior is including a default `config` and skipping over the missing callback or providing a default callback that, say, logs a message to the console.
 
 
@@ -189,8 +179,6 @@ No code should throw any exceptions. A key challenge with exceptions is that the
 
 
 ## Remote Procedure Calls
-
-****
 
 In [M1](https://docs.google.com/document/d/e/2PACX-1vSwf1NRh7D1iYxlqgnIPQT7pvCZEzbwoZ3dsRTnktxzJopuJSU2E2HB7_He-cVcOaDqWgTyYT18gjBJ/pub) we discussed that plain serialization for stateful functions would not work appropriately. To allow calling stateful functions from a remote node requires generating remote procedure call (RPC) stubs. RPC stubs are functions that, when called, pass arguments to a function residing on a remote node and then return the results (and resume execution) on the current node.
 
@@ -269,8 +257,6 @@ Any time someone invokes `μService` on `n1`, function `f` will be called on `n2
 
 ## Reflections & The Way Forward
 
-****
-
 As part of your submission add a small README.md markdown file with the following structure, along with answers to the following prompts:
 
 ```
@@ -303,8 +289,6 @@ Hours: \`\<time>\`
 
 ## Tips & Submission
 
-****
-
 Here are some guidelines that might be helpful:
 
 - Make sure you study the provided test cases — their inputs and outputs usually offer significant insights into the expected implementation structure. 
@@ -328,8 +312,6 @@ You are allowed to submit as many times as you want up until the deadline; so _s
 
 ## Implementation Checklist
 
-****
-
 - Complete `local.js` by adding `status` and `routes`, then `comm `
 (this is where the initialization of status, routes and comm happens)
 
@@ -339,8 +321,6 @@ You are allowed to submit as many times as you want up until the deadline; so _s
 
 
 ## FAQ
-
-****
 
 - Where to store the node states (route mappings, ids, message counts, etc)?
 
@@ -394,13 +374,9 @@ You call them in the same way, by doing `service.method(...args, callback)` .
 
 ## Feedback 
 
-****
-
 Please let us know if you find any mistakes, inconsistencies, or confusing language in this or any other CS1380 document by (1) emailing <cs1380headtas@lists.brown.edu>, or (2)  filling out the [M2 anonymous feedback form](https://forms.gle/EhPBZBsyZ3hJYXXZ9). In both cases, concrete ideas on how to improve things would be appreciated.
 
 ## Notes
-
-****
 
 #### [1]
 In this milestone, feel free to decide what this default behavior is. We will not be testing for default behaviors in the provided test suite. However, future milestones will provide more concrete specifications on what to do in the cases when certain input arguments to these or other services are omitted.
