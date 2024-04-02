@@ -126,9 +126,9 @@ At the very least, values should exist for the following values as first paramet
 
 **Service routes.** The `routes` service is responsible for maintaining a mapping from names to the objects responsible for handling operations. The reason this contains a bit more functionality than a map is to provide an interface for extensibility. 
 
-```
-`routes.get("status",` `(e,` `service)` `=>` `service.get("nid",` `console.log));`
-`routes.put(echoService,` `"echo",` `console.log);`
+```js
+routes.get("status",(e, service) => service.get("nid", console.log));
+routes.put(echoService, "echo", console.log);
 ```
 
 As before, if the value about to be accessed does not exist, the service should invoke the provided continuation with appropriate `Error` arguments (see [above](https://docs.google.com/document/d/1sP-b6Ls7YuaCVzBw-MOahoS0BoS4jZ2vHz3IjJSSwSk/edit#heading=h.xdn4ysl1soma)).
