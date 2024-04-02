@@ -1,35 +1,23 @@
 M2: Actors & Remote Procedure Calls
 
-```
-Collaboration: Individual milestone
-Completion: About 10–12 hours
-Deadline: Monday Feb. 19, 2024 (11:59PM ET), pending results of quiz 6
-Latest handout version: CS1380:2024:M2
-GitHub repo: https://github.com/brown-cs1380/m2
-```
+>Collaboration: Individual milestone\
+>Completion: About 10–12 hours\
+>Deadline: Monday Feb. 19, 2024 (11:59PM ET), pending results of quiz 6\
+>Latest handout version: CS1380:2024:M2\
+>GitHub repo: https://github.com/brown-cs1380/m2
 
-
-[Background & Context](#background--context)
-
-[Per-Node Listener and Configuration](#per-node-listener-and-configuration)
-
-[Naming and Calling Conventions](#naming-and-calling-conventions)
-
-[The Core Service Library](#the-core-service-library)
-
-[Error Handling](#error-handling)
-
-[Remote Procedure Calls](#remote-procedure-calls)
-
-[Reflections & The Way Forward](#reflections--the-way-forward)
-
-[Tips & Submission](#tips--submission)
-
-[Implementation Checklist](#implementation-checklist)
-
-[FAQ](#faq)
-
-[Feedback](#feedback)
+## Table of Contents
+* [Background & Context](#background--context)
+* [Per-Node Listener and Configuration](#per-node-listener-and-configuration)
+* [Naming and Calling Conventions](#naming-and-calling-conventions)
+* [The Core Service Library](#the-core-service-library)
+* [Error Handling](#error-handling)
+* [Remote Procedure Calls](#remote-procedure-calls)
+* [Reflections & The Way Forward](#reflections--the-way-forward)
+* [Tips & Submission](#tips--submission)
+* [Implementation Checklist](#implementation-checklist)
+* [FAQ](#faq)
+* [Feedback](#feedback)
 
 
 ## Background & Context
@@ -59,14 +47,14 @@ Each node combines two elements: (1) a listening server for receiving messages f
 
 **Node configuration.** At a minimum, the node configuration includes an IP address and a port. In the examples below, we assume two nodes — by default a node `n1`, which at times initiates interactions with a node `n2`. 
 
-```
-`let` `n1` `=` `{ip:` `"127.0.0.1",` `port:` `"8080"};`
-`let` `n2` `=`  `{ip:` `"127.0.0.1",` `port:` `"8081"};`
+```js
+let n1 = {ip: "127.0.0.1", port:"8080"};
+let n2 = {ip: "127.0.0.1", port:"8081"};
 ```
 
 A node can be configured upon startup either by providing as a parameter a serialized configuration object (in the general case, this object can include any [M1-supported ](https://docs.google.com/document/d/e/2PACX-1vSwf1NRh7D1iYxlqgnIPQT7pvCZEzbwoZ3dsRTnktxzJopuJSU2E2HB7_He-cVcOaDqWgTyYT18gjBJ/pub)deserialization value etc.) or by setting a global `config` object before importing the distribution library. The former is useful for passing a parameter when a node is spawned as a Unix process by running `./distribution.js` in the terminal; the latter is useful for when a node is launched by importing the `distribution.js` library. Here's an example of the former:
 
-```
+```js
 ./distribution.js --config '{ "ip": "127.0.0.1", "port": 8080}'
 ```
 
@@ -76,10 +64,10 @@ A node can be configured upon startup either by providing as a parameter a seria
 
 **Node listener.** For simplicity, the node listening server will be implemented by an HTTP server provided by the `http` library. Here's an example of such a server:
 
-```
-`let` `resolve` `=` `(req,` `res)` `=>` `console.log("request",` `req);`
-`let` `start` `=` `(srv)` `=>` `console.log("running",` `n1)`
-`http.createServer(resolve).listen(n1.port,` `n1.ip,` `start);`
+```js
+let resolve = (req, res) => console.log("request", req);
+let start = (srv) => console.log("running", n1);
+http.createServer(resolve).listen(n1.port, n1.ip, start);
 ```
 
 A few functions are important here. Function `resolve` takes a request and a response object, and populates the response object based on information from the request; it will need to _route_ the payload through the appropriate service using the `routes` service (explained below). Function `start` will be called after the HTTP server is up and running, and can be used to schedule the initiation of any stateful services — for example, services that send or receive configuration information via other nodes. It takes as parameter the server object itself — so that it has the ability to execute `srv.stop` when it needs to stop the HTTP server (say, to complete testing or to gracefully shut down a node.)
@@ -93,7 +81,7 @@ A node contains a library of services, which are callable both from within a nod
 
 **Continuation methods.** Service methods are _asynchronous and continuation-passing_ — i.e., instead of returning a result directly, they take a continuation function that handles the result. This is true for _all_ services our system implements, which means all service methods take an optional callback as their last argument. (The callback is optional because a caller might not be interested in the return value, similar to how the return value of a direct call is not always assigned to a variable.). Here's an example continuation method `cb` used extensively in M2:
 
-```
+```js
 let cb = (e, v) => e? console.error(e) : console.log(v);
 ```
 
@@ -103,7 +91,7 @@ The continuation function takes two arguments: an optional `Error` object and an
 
 **Service arguments.** Moreover, the service methods implemented in this milestone will take up to two other optional parameters: (1) an optional _state_ value, i.e., any (serializable) language value, and (2) an optional _configuration_ object or string. (As explained in the previous paragraph, they also take an optional _continuation_ function, to be called with appropriate results when the operation completes.) Here is a simple example:
 
-```
+```js
 status.get("nid", cb)
 ```
 
@@ -127,7 +115,7 @@ The table below shows a core set of services that need to be implemented (and ev
 
 **Service status.** The `status` service is responsible for maintaining some node-related information such as the node IP and port.
 
-```
+```js
 status.get("nid", console.log);
 status.get("sid", console.log);
 ```
@@ -149,16 +137,16 @@ As before, if the value about to be accessed does not exist, the service should 
 
 **Service comm.** The `comm` service is responsible for `send`ing messages across nodes. It will prepare a message, serializing all arguments, and ship it to the `routes` service of the remote node, which will pass the message to the service appropriate for handling it. The first argument to `send` is the list of arguments to the method, the second argument is information about the remote service, and the third (optional) argument is the callback.
 
-```
-`remote` `=` `{node:` `n2,` `service:` `'status',` `method:` `'get'};`
-`message` `=` `['counts'];`         `// list of arguments to service (status)`
-`comm.send(message,` `remote,` `console.log);`
+```js
+remote = {node: n2, service: 'status', method: 'get'};
+message = ['counts']; // list of arguments to service (status)
+comm.send(message, remote, console.log);
 
 
-`remote` `=` `{node:` `n2,` `service:` `'routes',` `method:` `'put'};`
-`let` `service` `=` `{` `put` `:` `(value,` `key,` `cb)` `=>` `{},` `get:` `(key,` `cb)` `=>` `{}` `}`  
-`message` `=` `[service,` `'mem']`    `// list of arguments to service (routes)`
-`comm.send(message,` `remote,` `(error,` `value)` `=>` `{});`
+remote = {node: n2, service: 'routes', method: 'put'};
+let service = {put : (value, key, cb) => {}, get: (key, cb) => {}}
+message =[service, 'mem'] // list of arguments to service (routes)`
+comm.send(message, remote, (error, value) => {});
 ```
 
 The `send` method should send messages by issuing an HTTP `PUT` request to the remote node. The HTTP server on the remote node will check if the object is valid JSON and, if yes, attempt to deserialize it (with the usual caveats about `Error.`) Method `send` creates and configures a request to be sent to a path of the form `/<service>/<method>`. The server-side `resolve` method will pass the payload to `routes`, which will call the appropriate service (and method).
@@ -197,11 +185,11 @@ To add support for generating RPC stubs, add a function `createRPC` into `utils`
 
 To have `g` to send data to the correct node requires expressing node information _literally_ in the function body. One way to accomplish this is to have `g` take a special node information that can be easily manipulated in the string representation of the function (i.e., after the function has been serialized. 
 
-```
-`function` `stub(...args, cb)` `{`
-  `let` `remote` `=` `{` `node:` `"__NODE_INFO__",` `service:` `'rpc'` `}`  
-  `local.send(args,` `remote,` `cb)`
-    }
+```js
+function stub(...args, cb){
+    let remote = {node: "__NODE_INFO__", service: 'rpc'}
+    local.send(args, remote, cb)
+}
 ```
 
 In the example above, `__NODE_INFO__` can be replaced with literal values after the function has been serialized. Information about the appropriate function (on the remote node) to be called can be embedded in a similar way using a unique identifier (a _remote_ _pointer_). This remote pointer, generated by and stored on the RPC target node, facilitates a correspondence between local function pointers and their remote identifiers.
@@ -228,22 +216,21 @@ Finally, supporting RPC invocations requires creating an endpoint for all your n
 
 **Example use:** Below is a usage example of an RPC. Node `n2` creates a stateful function, places its RPC stub on node `n1`, and then invokes it.
 
-```
+```js
 // All of the code below is executed from node n2
-`let` `n` `=` `0;`  
-`let` `f` `=` `()` `=>` `n++;`
+let n = 0;
+let f = () => n++;
 
 
 // Create a new service μService on node n1.
-`let` `r1` `=` `{` `node:` `n1,` `service:` `'routes',` `method:` `'put'};`
-`let` `m1` `=` `[{do:` `wire.createRPC(util.toAsync(f))},` `'μService'];`
-`local.comm.send(m1,` `r1,` `(e,` `v)` `=>` `{`
-  // Call the remote RPC service on n2
-`  let` `r2` `=` `{node:` `n1, service:` `'μService', method: 'do'};`
-`  let` `m2` `=` `[];`
-`  local.comm.send(m2,` `r2,` `(error,` `result)` `=>` `{});`
-    });
-
+let r1 = {node: n1, service: 'routes', method: 'put'};
+let m1 = [{do: wire.createRPC(util.toAsync(f))}, 'μService'];
+local.comm.send(m1, r1, (e, v) => {
+    // Call the remote RPC service on n2
+    let r2 = {node: n1, service: 'μService', method: 'do'};
+    let m2 = [];
+    local.comm.send(m2, r2, (error, result) => {});
+});
 ```
 
 Any time someone invokes `μService` on `n1`, function `f` will be called on `n2`. 
@@ -261,30 +248,30 @@ As part of your submission add a small README.md markdown file with the followin
 
 ```
 
-\# M2: Actors and Remote Procedure Calls (RPC)
-\> Full name: \`\<first last>\`
-\> Email:  \`\<email\@brown.edu>\`
-\> Username:  \`cslogin\`
+# M2: Actors and Remote Procedure Calls (RPC)
+> Full name: `<first last>`
+> Email: `<email@brown.edu>`
+> Username: `cslogin`
 
-\## Summary
-\> Summarize your implementation, including key challenges you encountered
+## Summary
+> Summarize your implementation, including key challenges you encountered
 
-My implementation comprises \`\<number>\` software components, totaling \`\<number>\` lines of code. Key challenges included \`<1, 2, 3 + how you solved them>\`.
+My implementation comprises `<number>` software components, totaling `<number>` lines of code. Key challenges included `<1, 2, 3 + how you solved them>`.
 
-\## Correctness & Performance Characterization
-\> Describe how you characterized the correctness and performance of your implementation
+## Correctness & Performance Characterization
+> Describe how you characterized the correctness and performance of your implementation
 
-\*Correctness\*: I wrote \`\<number>\` tests; these tests take \`\<time>\` to execute. 
+*Correctness*: I wrote `<number>` tests; these tests take `<time>` to execute. 
 
-\*Performance\*: Evaluating RPC performance using \[high-resolution timers]\(https\://nodejs.org/api/perf\_hooks.html) by sending 1000 service requests in a tght loop results in an average throughput of \`\<rps>\` requests per second and an average latency of \`\<time>\` ms.
+*Performance*: Evaluating RPC performance using [high-resolution timers](https://nodejs.org/api/perf_hooks.html) by sending 1000 service requests in a tght loop results in an average throughput of `<rps>` requests per second and an average latency of `<time>` ms.
 
-\## Key Feature
-\> How would you explain your implementation of \`createRPC\` to your grandparents (assuming your grandparents are not computer scientists...), i.e., with the minimum jargon possible?
+## Key Feature
+> How would you explain your implementation of `createRPC` to your grandparents (assuming your grandparents are not computer scientists...), i.e., with the minimum jargon possible?
 
-\## Time to Complete
-\> Roughly, how many hours did this milestone take you to complete?
+## Time to Complete
+> Roughly, how many hours did this milestone take you to complete?
 
-Hours: \`\<time>\`
+Hours: `<time>`
 ```
 
 ## Tips & Submission
@@ -328,13 +315,13 @@ You are allowed to submit as many times as you want up until the deadline; so _s
 
 
 
-- How to replace '\_\_METHOD\_ID\_\_' into the stub?
+- How to replace '__METHOD_ID__' into the stub?
 
     - Do `serialize(stub).replace("'NODE_INFO'", node).replace…`
 
 
 
-Special tips from Yutong’s note:
+Special tips from Yutong's note:
 
 If you find the RPC example in the handout confusing, see if you can understand things conceptually first:
 
@@ -354,19 +341,19 @@ When `g` gets called, it sends a request to the node hosting `f` (in this case n
 
 To sum up, _conceptually_ the implementation of a local service would be something along the lines of:
 
-```
-    service.method = function(...args, callback）{
-      e, v = execute_something();
-      callback(e, v);
-    }
+```js
+service.method = function(...args, callback){
+    e, v = execute_something();
+    callback(e, v);
+}
 ```
 
 Whereas a remote service is just _(conceptually)_:
 
-```
-    remoteService.method = function(...args, callback）{
-      send(args, remote, callback)
-    }
+```js
+remoteService.method = function(...args, callback){
+    send(args, remote, callback);
+}
 ```
 
 You call them in the same way, by doing `service.method(...args, callback)` .
