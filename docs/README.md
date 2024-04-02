@@ -25,6 +25,8 @@ GitHub repo: https://github.com/brown-cs1380/m2
 
 [Tips & Submission](#tips--submission)
 
+[Implementation Checklist](#implementation-checklist)
+
 [FAQ](#faq)
 
 [Feedback](#feedback)
@@ -62,18 +64,14 @@ Each node combines two elements: (1) a listening server for receiving messages f
 **Node configuration.** At a minimum, the node configuration includes an IP address and a port. In the examples below, we assume two nodes — by default a node `n1`, which at times initiates interactions with a node `n2`. 
 
 ```
-
 `let` `n1` `=` `{ip:` `"127.0.0.1",` `port:` `"8080"};`
-
 `let` `n2` `=`  `{ip:` `"127.0.0.1",` `port:` `"8081"};`
 ```
 
 A node can be configured upon startup either by providing as a parameter a serialized configuration object (in the general case, this object can include any [M1-supported ](https://docs.google.com/document/d/e/2PACX-1vSwf1NRh7D1iYxlqgnIPQT7pvCZEzbwoZ3dsRTnktxzJopuJSU2E2HB7_He-cVcOaDqWgTyYT18gjBJ/pub)deserialization value etc.) or by setting a global `config` object before importing the distribution library. The former is useful for passing a parameter when a node is spawned as a Unix process by running `./distribution.js` in the terminal; the latter is useful for when a node is launched by importing the `distribution.js` library. Here's an example of the former:
 
 ```
-
 ./distribution.js --config '{ "ip": "127.0.0.1", "port": 8080}'
-
 ```
 
 **Node identifiers.** A node identifier (NID) is a sha256 hash of this object; and a short node identifier (SID) is the first 5 characters of this hash. Appropriate methods for calculating these are provided in `utils/id.js`. These IDs are helpful for uniquely identifying a node, and can be used to distinguish data storage locations as distinct local folders when multiple nodes are running on the same computer (e.g., a student laptop), useful for later milestones.
@@ -83,13 +81,9 @@ A node can be configured upon startup either by providing as a parameter a seria
 **Node listener.** For simplicity, the node listening server will be implemented by an HTTP server provided by the `http` library. Here's an example of such a server:
 
 ```
-
 `let` `resolve` `=` `(req,` `res)` `=>` `console.log("request",` `req);`
-
 `let` `start` `=` `(srv)` `=>` `console.log("running",` `n1)`
-
 `http.createServer(resolve).listen(n1.port,` `n1.ip,` `start);`
-
 ```
 
 A few functions are important here. Function `resolve` takes a request and a response object, and populates the response object based on information from the request; it will need to _route_ the payload through the appropriate service using the `routes` service (explained below). Function `start` will be called after the HTTP server is up and running, and can be used to schedule the initiation of any stateful services — for example, services that send or receive configuration information via other nodes. It takes as parameter the server object itself — so that it has the ability to execute `srv.stop` when it needs to stop the HTTP server (say, to complete testing or to gracefully shut down a node.)
@@ -332,25 +326,21 @@ To create a submission, run s/submit.sh from the root folder of M2. This will cr
 You are allowed to submit as many times as you want up until the deadline; so _submit early and often_. For full grade, before submitting the final version of your code make sure that (1) all linters run without any errors, (2) the provided tests run without any errors, and (3) you have provided an additional five or more tests with your implementation.
 
 
+## Implementation Checklist
+
+****
+
+- Complete `local.js` by adding `status` and `routes`, then `comm `
+(this is where the initialization of status, routes and comm happens)
+
+- Complete `start` in `node.js`
+
+- Complete `createRPC` in `wire.js`
 
 
 ## FAQ
 
 ****
-
-Here we compiled a list of FAQs.
-
-
-- General Roadmap (for getting started):
-
-    1. Complete `local.js` by adding `status` and `routes`, then `comm `
-    (this is where the initialization of status, routes and comm happens)
-
-    2. Complete `start` in `node.js`
-
-    3. Complete `createRPC` in `wire.js`
-
-
 
 - Where to store the node states (route mappings, ids, message counts, etc)?
 
