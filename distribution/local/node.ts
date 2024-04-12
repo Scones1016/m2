@@ -1,14 +1,14 @@
+import http, { Server, IncomingMessage, ServerResponse } from 'http';
+import {serialize} from '../util/serialization';
 
-const serialization = require('../util/serialization');
 /*
     The start function will be called to start your node.
     It will take a callback as an argument.
     After your node has booted, you should call the callback.
 */
 
-
-const start = function(started) {
-  const server = http.createServer((req, res) => {
+const start = (started: (server: Server) => void) => {
+  const server: Server = http.createServer((req: IncomingMessage, res: ServerResponse) => {
     /* Your server will be listening for PUT requests. */
 
     // Write some code...
@@ -51,8 +51,9 @@ const start = function(started) {
       It will be called by the service with the result of it's call
       then it will serialize the result and send it back to the caller.
         */
-        const serviceCallback = (e, v) => {
-          res.end(serialization.serialize([e, v]));
+        const serviceCallback = (e: any, v: any) => {
+            // need to adjust this after serialization is converted to ts?
+          res.end(serialize([e, v]));
         };
 
         // Write some code...
@@ -78,6 +79,7 @@ const start = function(started) {
   });
 };
 
-module.exports = {
-  start: start,
+export {
+  start
 };
+
